@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>先出现后旋转的弹窗</title>
+    <style>
+        body {
+            margin: 0;
+            background: #f0f7ff;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+        .center-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 100px;
+            font-weight: bold;
+            color: rgba(255, 100, 150, 0.2);
+            z-index: 1;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .dialog {
+            position: fixed;
+            padding: 10px 18px;
+            border-radius: 30px;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+            opacity: 0;
+            transform: scale(0.8);
+            animation: popIn 0.5s forwards;
+        }
+        .dialog:hover {
+            transform: scale(1.05);
+        }
+        .heart {
+            position: absolute;
+            color: #ff6b8b;
+            font-size: 20px;
+            pointer-events: none;
+            opacity: 0.7;
+            z-index: 5;
+        }
+        @keyframes popIn {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="center-text">love you</div>
+
+    <script>
+        let name = prompt("请输入名字接受礼物", "");
+        name = name ? name.trim() : "你";
+
+        // 修复了标点符号和模板字符串的错误
+        const messages = [
+            "喜欢你很久了", "想陪你看星星", "想念在风里飘",
+            "你的温柔让我沦陷", "星光都为你亮了", "一瞬也是永恒",
+            "你眼里有星星", "你的名字是我心事", "心跳为你加速",
+            `${name}，我爱你`, "满脑子都是你", "我爱你，从星辰到黎明",
+            "满心都是对你的爱意", "爱你是我唯一的秘密",  // 修复中文逗号为英文逗号
+            `${name},你是我的唯一`  // 修复单引号为反引号`
+        ];
+
+        const colors = [
+            "#ff6b8b", "#66ccff", "#ffcc66", "#66d2a0", "#a87aff",
+            "#ff8a66", "#66a1ff", "#ff77aa", "#77dd77", "#ffb347"
+        ];
+
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        const minRadius = 120;
+        const maxRadius = 400;
+        const totalDialogs = 100;
+        const appearInterval = 50;
+        let dialogsReady = 0;
+        let isRotating = false;
+
+        function calculatePosition(angle, radius) {
+            const x = centerX + radius * Math.cos(angle) - 70;
+            const y = centerY + radius * Math.sin(angle) - 15;
+            return { x, y };
+        }
+
+        function startRotation(element, angle, radius, speed) {
+            setInterval(() => {
+                if (isRotating) {
+                    angle += speed;
+                    const pos = calculatePosition(angle, radius);
+                    element.style.left = pos.x + "px";
+                    element.style.top = pos.y + "px";
+                }
+            }, 50);
+        }
+
+        function createDialog(index) {
+            const dialog = document.createElement("div");
+            dialog.className = "dialog";
+            dialog.textContent = messages[Math.floor(Math.random() * messages.length)];
+            dialog.style.background = colors[Math.floor(Math.random() * colors.length)];
+            
+            const angle = (index / totalDialogs) * Math.PI * 2;
+            const radius = minRadius + Math.random() * (maxRadius - minRadius);
+            const pos = calculatePosition(angle, radius);
+            
+            dialog.style.left = pos.x + "px";
+            dialog.style.top = pos.y + "px";
+            document.body.appendChild(dialog);
+            
+            dialog.dataset.initialAngle = angle;
+            dialog.dataset.radius = radius;
+            dialog.dataset.speed = (Math.random() * 0.005) + 0.002;
+            
+            dialogsReady++;
+            checkAllReady();
+            
+            startRotation(
+                dialog,
+                angle,
+                radius,
+                parseFloat(dialog.dataset.speed)
+            );
+        }
+
+        function checkAllReady() {
+            if (dialogsReady >= totalDialogs && !isRotating) {
+                setTimeout(() => {
+                    isRotating = true;
+                }, 1000);
+            }
+        }
+
+        function createHeart() {
+            const heart = document.createElement("div");
+            heart.className = "heart";
+            heart.innerHTML = "❤";
+            
+            const size = Math.random() * 30 + 10;
+            heart.style.fontSize = size + "px";
+            
+            const side = Math.floor(Math.random() * 4);
+            let startX, startY, endX, endY;
+            
+            switch(side) {
+                case 0:
+                    startX = Math.random() * window.innerWidth;
+                    startY = -50;
+                    endX = Math.random() * window.innerWidth;
+                    endY = window.innerHeight + 50;
+                    break;
+                case 1:
+                    startX = Math.random() * window.innerWidth;
+                    startY = window.innerHeight + 50;
+                    endX = Math.random() * window.innerWidth;
+                    endY = -50;
+                    break;
+                case 2:
+                    startX = -50;
+                    startY = Math.random() * window.innerHeight;
+                    endX = window.innerWidth + 50;
+                    endY = Math.random() * window.innerHeight;
+                    break;
+                case 3:
+                    startX = window.innerWidth + 50;
+                    startY = Math.random() * window.innerHeight;
+                    endX = -50;
+                    endY = Math.random() * window.innerHeight;
+                    break;
+            }
+            
+            heart.style.left = startX + "px";
+            heart.style.top = startY + "px";
+            document.body.appendChild(heart);
+            
+            const duration = Math.random() * 15 + 10;
+            const startTime = Date.now();
+            
+            function animateHeart() {
+                const elapsed = (Date.now() - startTime) / 1000;
+                const progress = elapsed / duration;
+                
+                if (progress < 1) {
+                    const x = startX + (endX - startX) * progress;
+                    const y = startY + (endY - startY) * progress;
+                    heart.style.left = x + "px";
+                    heart.style.top = y + "px";
+                    requestAnimationFrame(animateHeart);
+                } else {
+                    heart.remove();
+                }
+            }
+            
+            animateHeart();
+        }
+
+        for (let i = 0; i < totalDialogs; i++) {
+            setTimeout(() => createDialog(i), i * appearInterval);
+        }
+
+        setInterval(createHeart, 100);
+    </script>
+</body>
+</html>
